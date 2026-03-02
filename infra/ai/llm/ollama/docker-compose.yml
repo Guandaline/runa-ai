@@ -1,0 +1,53 @@
+# docker-compose.yml
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    restart: always
+    environment:
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=1h
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - |
+        # 1. Start server in background
+        /bin/ollama serve &
+        pid=$!
+
+        # 2. Wait for server to be responsive (Manual healthcheck)
+        echo "🔴 Waiting for Ollama to start..."
+        while ! ollama list > /dev/null 2>&1; do
+            sleep 1
+        done
+        echo "🟢 Ollama started!"
+
+        # 3. Download required models (Embeddings + LLM)
+        # The nomic-embed-text model is essential for embedding tests
+        echo "⬇️ Downloading nomic-embed-text..."
+        ollama pull nomic-embed-text
+        
+        # The llama3.2 (or 3.2:1b) is essential for LLM tests
+        echo "⬇️ Downloading llama3.2..."
+        ollama pull llama3.2:1b
+        # ollama pull llama3.2
+
+        echo "✅ All models ready!"
+
+        # 4. Keep container running by waiting for server process
+        wait $pid
+
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  ollama_storage:

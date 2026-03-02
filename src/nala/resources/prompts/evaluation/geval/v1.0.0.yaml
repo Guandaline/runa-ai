@@ -1,0 +1,52 @@
+name: "evaluation/geval"
+version: "1.0.0"
+description: "Multi-language G-Eval prompt with Chain-of-Thought for structured evaluation."
+input_variables:
+  - language
+  - metric_name
+  - metric_description
+  - rubric
+  - input_query
+  - actual_output
+  - retrieved_context
+  - expected_output
+
+template: |
+  # System Role
+  You are an expert AI Quality Judge.
+  Your task is to evaluate an interaction in **{{ language }}**.
+
+  ---
+  ### Evaluation Criterion: {{ metric_name }}
+  {{ metric_description }}
+
+  ### Scoring Rubric (0.0 to 1.0)
+  {{ rubric }}
+
+  ---
+  ### Evaluation Data
+  
+  **User Input:**
+  {{ input_query }}
+
+  **System Response:**
+  {{ actual_output }}
+
+  {% if retrieved_context %}
+  **Retrieved Context (RAG):**
+  {% for item in retrieved_context %}
+  - {{ item }}
+  {% endfor %}
+  {% endif %}
+
+  {% if expected_output %}
+  **Reference Response (Ground Truth):**
+  {{ expected_output }}
+  {% endif %}
+
+  ---
+  ### Output Instructions
+  1. Analyze step-by-step the coherence, faithfulness, and quality of the response by comparing it with the provided data.
+  2. Use the provided rubric strictly to calibrate your decision.
+  3. **IMPORTANT:** Write your Chain-of-Thought reasoning in **{{ language }}**.
+  4. Finally, assign the final numeric score.

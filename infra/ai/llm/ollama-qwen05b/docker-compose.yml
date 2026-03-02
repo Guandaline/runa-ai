@@ -1,0 +1,52 @@
+# infra/ai/llm/ollama/docker-compose.test.yml
+services:
+  ollama_test:
+    image: ollama/ollama:latest
+    container_name: ollama_test
+    ports:
+      - "11435:11434"
+    volumes:
+      - ollama_storage_test:/root/.ollama
+    restart: always
+    environment:
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_KEEP_ALIVE=1h
+    entrypoint: /bin/sh
+    command:
+      - "-c"
+      - |
+        # 1. Inicia o servidor em background
+        /bin/ollama serve &
+        pid=$!
+
+        # 2. Aguarda o servidor responder
+        echo "🔴 [TEST] Aguardando Ollama Test iniciar..."
+        while ! ollama list > /dev/null 2>&1; do
+            sleep 1
+        done
+        echo "🟢 [TEST] Ollama Test iniciado!"
+
+        # 3. Baixa modelos LEVES para teste
+        echo "⬇️ [TEST] Baixando nomic-embed-text..."
+        ollama pull nomic-embed-text
+        
+        echo "⬇️ [TEST] Baixando qwen:0.5b..."
+        ollama pull qwen:0.5b
+
+        echo "✅ [TEST] Modelos prontos!"
+
+        # 4. Mantém o processo rodando
+        wait $pid
+
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - nala_network
+
+volumes:
+  ollama_storage_test:

@@ -1,0 +1,29 @@
+[default]
+app_name = "AgentIntegrationTest"
+log_level = "DEBUG"
+
+# --- Agent Module ---
+[default.ai.agents]
+enabled = true
+default_profile = "math_agent"
+default_connection_name = "integration_test_llm"
+
+# --- Agent Profile ---
+[default.ai.agents.profiles.connections.math_agent]
+enabled = true
+name = "math_agent"
+description = "Integration Test Agent"
+system_prompt = "You are a calculator assistant. You MUST use the 'calculator_tool' for ANY math question."
+connection_name = "integration_test_llm"
+temperature = 0.0
+max_iterations = 5
+tools = ["calculator_tool"]
+
+[default.ai.connections.connections.integration_test_llm]
+enabled = true
+backend = "ollama"
+default_model = "llama3.2:1b"
+
+[default.ai.connections.connections.integration_test_llm.provider]
+backend = "ollama"
+base_url = "http://localhost:11434"

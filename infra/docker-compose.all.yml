@@ -1,0 +1,9 @@
+include:
+  - ./ai/llm/ollama/docker-compose.yml
+  - ./ai/llm/ollama-qwen05b/docker-compose.yml
+  - ./ai/llm/nomic-embed-text/docker-compose.yml
+
+networks:
+  nala_network:
+    driver: bridge
+    name: nala_network

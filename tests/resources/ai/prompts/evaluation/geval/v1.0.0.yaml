@@ -1,0 +1,28 @@
+name: geval
+version: 1.0.0
+description: Standard G-Eval Prompt for Integration Tests
+input_variables:
+  - metric_name
+  - rubric
+  - input_query
+  - actual_output
+  - retrieved_context
+  - language
+template: |
+  You are an impartial AI evaluator.
+
+  Your task is to evaluate the response of an AI system based on the metric below.
+
+  Metric: {{ metric_name }}
+  Evaluation Criteria (Rubric): {{ rubric }}
+
+  ---
+  User Question: {{ input_query }}
+  Retrieved Context: {{ retrieved_context }}
+  AI Response: {{ actual_output }}
+  ---
+
+  Analyze step-by-step whether the AI Response meets the criteria of the metric.
+  Return ONLY a valid JSON object with two fields:
+  - "score": a float number between 0.0 and 1.0.
+  - "reasoning": a concise explanation of the score.

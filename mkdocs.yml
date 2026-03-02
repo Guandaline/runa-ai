@@ -1,0 +1,151 @@
+# Project Information
+site_name: Teste Nala
+site_description: >-
+  Robust IDP for building resilient, observable,
+  and scalable microservices in Python.
+site_author: Valter Hugo Guandaline
+site_url: https://test-nala.github.io/athomic/
+
+# Repository
+repo_name: test-nala/athomic
+repo_url: https://github.com/test-nala/athomic
+edit_uri: "" # Optional: link to edit pages in the repo
+
+# Copyright
+copyright: Copyright &copy; 2025 Valter Hugo Guandaline
+
+# Theme Configuration
+theme:
+  name: material
+  language: en
+  palette:
+    # Palette toggle for light vs dark mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+
+# Plugins
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src] # Tell mkdocstrings to look for source code in the 'src' directory
+          options:
+            show_root_heading: yes
+            show_source: false
+
+# Navigation Structure
+nav:
+  - 'Home': 'index.md'
+  - 'Architecture':
+    - 'Overview': 'architecture/index.md'
+    - 'Dependency Injection': 'architecture/dependency-injection.md'
+    - 'Athomic Layer': 'architecture/athomic-layer.md'
+    - 'Domain Layer': 'architecture/domain-layer.md'
+  - 'Athomic Layer':
+    - 'AI':
+      - 'Agents': 'athomic/ai/agents.md'
+      - 'Document Ingestion': 'athomic/ai/documents.md'
+      - 'Embeddings': 'athomic/ai/embeddings.md'
+      - 'Governance': 'athomic/ai/governance.md'
+      - 'Rag': 'athomic/ai/rag.md'
+      - 'LLM': 'athomic/ai/llm.md'
+      - 'Memory': 'athomic/ai/memory.md'
+      - 'Semantic Cache': 'athomic/ai/semantic_cache.md'
+      - 'QA & Evaluation': 'athomic/ai/qa_evaluation.md'
+    - 'Core & Lifecycle':
+      - 'Lifecycle Management': 'athomic/lifecycle.md'
+      - 'Plugin System': 'athomic/plugins.md'
+      - 'Services': 'athomic/services.md'
+      - 'Session': 'athomic/session.md'
+    - 'Configuration & Context':
+      - 'Configuration': 'athomic/config.md'
+      - 'Configuration Schemas': 'athomic/config/schemas.md'
+      - 'Live Configuration': 'athomic/control/live_config.md'
+      - 'Context Management': 'athomic/context.md'
+      - 'Credential Resolution': 'athomic/credentials.md'
+    - 'Data & Persistence':
+      - 'Connection Management': 'athomic/database.md'
+      - 'Document Databases': 'athomic/database/documents.md'
+      - 'Key-Value Databases': 'athomic/database/kvstore.md'
+      - 'Graph Databases': 'athomic/database/graph.md'
+      - 'Vector Store': 'athomic/database/vector.md'
+      - 'Transactional Outbox': 'athomic/database/outbox.md'
+      - 'Database Migrations': 'athomic/database/migrations.md'
+      - 'File Storage': 'athomic/storage.md'
+    - 'Deployment':
+      - 'Cloud-Native & Service Mesh Mode': 'athomic/cloud_native_mesh_mode.md'
+    - 'Security':
+      - 'Secrets Management': 'athomic/security/secrets.md'
+      - 'Authentication & Authorization': 'athomic/security/auth.md'
+      - 'Cryptography': 'athomic/security/crypto.md'
+    - 'Observability':
+      - 'Structured Logging': 'athomic/observability/log.md'
+      - 'Distributed Tracing': 'athomic/observability/tracing.md'
+      - 'Metrics': 'athomic/observability/metrics.md'
+      - 'Health & Readiness': 'athomic/observability/health.md'
+      - 'Data Lineage': 'athomic/lineage.md'
+    - 'Cross-Cutting Concerns':
+      - 'Serializer': 'athomic/serializer.md'
+      - 'Payload Pipeline': 'athomic/payload.md'
+      - 'Payload Compression': 'athomic/compression.md'
+      - 'Notifications': 'athomic/notification.md'
+      - 'Internal Event Bus': 'athomic/events.md'
+      - 'HTTP Client': 'athomic/http.md'
+    - 'Control':
+      - 'Feature Flags': 'athomic/control/feature_flags.md'
+      - 'Task Scheduler': 'athomic/control/scheduler.md'
+    - 'Performance':
+      - 'Caching': 'athomic/performance/cache.md'
+      - 'HTTP Compression': 'athomic/performance/compression_middleware.md'
+      - 'Bootstrap (uvloop)': 'athomic/performance/bootstrap.md'
+    - 'Integration Layer':
+      - 'Messaging':
+        - 'Overview': 'athomic/integration/messaging/index.md'
+        - 'Producer': 'athomic/integration/messaging/producer.md'
+        - 'Consumer': 'athomic/integration/messaging/consumer.md'
+        - 'Retry & DLQ': 'athomic/integration/messaging/retry-dlq.md'
+        - 'Delayed Messages': 'athomic/integration/messaging/delay.md'
+        - 'Context Propagation': 'athomic/integration/messaging/context-propagation.md'
+        - 'Internals & Architecture': 'athomic/integration/messaging/internals.md'
+      - 'Outbox Publisher': 'athomic/integration/outbox_publisher.md'
+      - 'Background Tasks': 'athomic/integration/tasks.md'
+      - 'Service Discovery': 'athomic/integration/discovery.md'
+      - 'Consul Client': 'athomic/integration/consul.md'
+      - 'Dynamic Config Providers': 'athomic/integration/config_providers.md'
+      - 'OpenLineage': 'athomic/integration/openlineage.md'
+    - 'Resilience Patterns':
+      - 'Retry': 'athomic/resilience/retry.md'
+      - 'Circuit Breaker': 'athomic/resilience/circuit_breaker.md'
+      - 'Rate Limiter': 'athomic/resilience/rate_limiter.md'
+      - 'Timeout & Cancellation': 'athomic/resilience/timeout.md'
+      - 'Bulkhead': 'athomic/resilience/bulkhead.md'
+      - 'Fallback': 'athomic/resilience/fallback.md'
+      - 'Distributed Locking': 'athomic/resilience/locking.md'
+      - 'Idempotency': 'athomic/resilience/idempotency.md'
+      - 'Distributed Leasing': 'athomic/resilience/leasing.md'
+      - 'Workload Sharding': 'athomic/resilience/sharding.md'
+      - 'Backpressure': 'athomic/resilience/backpressure.md'
+      - 'Exponential Backoff': 'athomic/resilience/backoff.md'
+      - 'Sagas': 'athomic/resilience/sagas.md'
+      - 'Adaptive Throttling': 'athomic/resilience/adaptive_throttling.md'
+    - 'Workflows': 'athomic/workflows.md'

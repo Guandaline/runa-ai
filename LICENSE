@@ -1,0 +1,11 @@
+RESTRICTED USE EVALUATION LICENSE
+
+Copyright (c) 2026 [Seu Nome]
+
+This source code and related documentation are provided strictly for the purpose of technical evaluation during the recruitment process. 
+
+Permission is NOT granted to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software for any other purpose, commercial or otherwise, without prior written consent from the author.
+
+NOTICE: This codebase represents a restricted slice of a larger internal framework. If there is interest, the complete version of this framework is currently being prepared for a future open-source release. We strongly advise against using or deploying this specific evaluation version in any production environment, as it is not intended for such use.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

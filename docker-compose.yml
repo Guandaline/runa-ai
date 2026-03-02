@@ -1,0 +1,42 @@
+include:
+  - ./infra/docker-compose.all.yml
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nala_core_api_app_dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app
+      - ./settings:/app/settings
+      - ./static:/app/static
+      - ./plugins:/app/plugins
+      - ./devtools:/app/devtools
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      env: development
+      ENV_FOR_DYNACONF: development
+      NALA_SETTINGS_FILES: settings/development.toml
+    depends_on:
+      mongo1:
+        condition: service_started
+      redis:
+        condition: service_started
+      consul:
+        condition: service_started
+      vault:
+        condition: service_started
+      jaeger:
+        condition: service_started
+      zookeeper:
+        condition: service_started
+      kafka:
+        condition: service_healthy 
+    networks:
+      - nala_network
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "nala.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -1,0 +1,22 @@
+# tests/settings/ai/test_int_google_genai.toml
+[default]
+app_name = "GoogleGenAIIntegrationTest"
+log_level = "DEBUG"
+
+[default.ai.connections]
+default_connection_name = "genai_main"
+
+    [default.ai.connections.connections.genai_main]
+    enabled = true
+    backend = "google_genai"
+    default_model = "gemini-1.5-flash"
+    timeout = 60.0
+
+    [default.ai.connections.connections.genai_main.generation]
+    temperature = 0.0
+    max_output_tokens = 1024
+
+    [default.ai.connections.connections.genai_main.provider]
+    backend = "google_genai"
+    project_id = "placeholder_project"
+    location = "us-central1"

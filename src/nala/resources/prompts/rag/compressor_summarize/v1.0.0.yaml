@@ -1,0 +1,21 @@
+name: "rag/compressor_summarize"
+version: "1.0.0"
+description: "Summarizes a document chunk to reduce token usage while preserving facts."
+input_variables:
+  - context_text
+  - target_length
+template: |
+  System: You are an expert editor. Your goal is to compress the text below.
+
+  Instructions:
+  1. Summarize the following text to approximately {{ target_length }} tokens.
+  2. Preserve all entities, dates, numbers, and key technical details.
+  3. Remove conversational filler and redundant adjectives.
+  4. Do NOT verify facts, just compress the given text.
+
+  Text to compress:
+  """
+  {{ context_text }}
+  """
+
+  Compressed version:

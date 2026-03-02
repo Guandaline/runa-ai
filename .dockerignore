@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Virtual Environment
+.venv
+venv
+env/
+ENV/
+*.egg-info
+
+# IDE and system files
+.idea/
+.vscode/
+*.pyc
+__pycache__/
+.DS_Store
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+# Configuration and secret files
+.env
+*.env
+.env.*
+secrets/
+*.pem
+*.key
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test files and reports
+tests/
+.pytest_cache/
+coverage.xml
+htmlcov/

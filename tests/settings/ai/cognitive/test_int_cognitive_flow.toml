@@ -1,0 +1,39 @@
+# tests/settings/ai/cognitive/test_int_cognitive_flow.toml
+[default]
+app_name = "CognitiveIntegrationTest"
+log_level = "DEBUG"
+
+# --- Cognitive Domain Config ---
+[default.ai.cognitive]
+enabled = true
+strategy = "llm"
+default_model = "llama3.2:1b"
+confidence_threshold = 0.5
+default_prompt_template = "cognitive/intent_classification"
+
+# --- AI Connections (Correct Standard Path) ---
+# LLMManager expects configurations here by default
+[default.ai.connections]
+default_connection_name = "local_ollama"
+
+    [default.ai.connections.connections.local_ollama]
+    enabled = true
+    backend = "openai" 
+    default_model = "llama3.2:1b"
+    timeout = 60.0
+
+    [default.ai.connections.connections.local_ollama.provider]
+    backend = "openai"
+    base_url = "http://localhost:11434/v1"
+    api_key = "ollama"
+
+# --- Prompts (Filesystem) ---
+[default.ai.prompts]
+enabled = true
+backend = "filesystem"
+renderer = "jinja2"
+
+[default.ai.prompts.provider]
+backend = "filesystem"
+# This base_path will be dynamically overridden by the test fixture
+base_path = "./tests/resources/ai/prompts"

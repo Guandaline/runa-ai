@@ -1,0 +1,17 @@
+[default]
+app_name = "LangGraphIntegrationTest"
+log_level = "DEBUG"
+
+# --- Workflow Engine Settings ---
+[default.ai.workflow]
+enabled = true
+default_provider = "langgraph"
+max_execution_steps = 10
+debug_mode = true
+
+# Desabilitar serviços não utilizados para isolamento
+[default.database.vector]
+enabled = false
+
+[default.ai.embeddings]
+enabled = false

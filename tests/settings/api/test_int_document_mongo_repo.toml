@@ -1,0 +1,24 @@
+# Test settings for test_int_document_mongo_repo.py
+[default]
+app_name = "MongoRepoIntegrationTest"
+timeout = 2.0
+
+[default.context]
+multi_tenancy_enabled = true
+
+[default.security.secrets]
+enabled = false
+
+[default.database]
+model_packages = ["tests.integration.nala.api.infra.test_int_document_mongo_repo"]
+
+[default.database.documents]
+default_connection_name = "default_mongo"
+
+[default.database.documents.connections.default_mongo]
+  enabled = true
+  backend = "mongo"
+  [default.database.documents.connections.default_mongo.provider]
+  backend = "mongo"
+  database_name = "test_db_placeholder"
+  url = "@env('MONGO_TEST_URI')"

@@ -1,0 +1,19 @@
+# tests/settings/ai/test_int_llm_local.toml
+[default]
+app_name = "LLMLocalIntegrationTest"
+log_level = "DEBUG"
+
+[default.ai.connections]
+default_connection_name = "local_ollama"
+
+    [default.ai.connections.connections.local_ollama]
+    enabled = true
+    backend = "openai"  
+    default_model = "llama3.2:1b"
+    timeout = 120.0
+
+    [default.ai.connections.connections.local_ollama.provider]
+    backend = "openai"
+    base_url = "http://localhost:11434/v1"
+    api_key = "ollama" # Dummy key
+    organization_id = "org-local"

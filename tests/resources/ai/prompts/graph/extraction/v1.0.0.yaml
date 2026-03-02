@@ -1,0 +1,15 @@
+name: "graph/extraction"
+version: "1.0.0"
+description: "Extract entities and relationships to build the Knowledge Graph."
+input_variables:
+  - context
+configuration:
+  temperature: 0.0
+  max_tokens: 1000
+template: |
+  Extract all relevant entities and their relationships from the provided context to form a knowledge graph.
+  
+  Context:
+  {{ context }}
+  
+  Return the output as a structured list of triples (Subject, Predicate, Object).

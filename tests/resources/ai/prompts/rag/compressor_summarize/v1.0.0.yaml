@@ -1,0 +1,13 @@
+name: rag/compressor_summarize
+version: 1.0.0
+description: Summarize context for compression strategies
+input_variables:
+  - context
+template: |
+  Summarize the following context to be as concise as possible while retaining key information.
+  Reduce the text length significantly.
+
+  Context:
+  {{ context }}
+
+  Summary:

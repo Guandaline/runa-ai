@@ -1,0 +1,15 @@
+# tests/settings/resilience/test_int_multiple_circuits.toml
+[default]
+app_name = "multiplecircuitsintegrationtest"
+log_level = "debug"
+
+[default.resilience.circuit_breaker]
+enabled = true
+namespace = "test_int_multi_cb"
+provider = { backend = "redis", redis = { uri = "redis://localhost:6379/11" } }
+
+default_fail_max = 5
+default_reset_timeout_sec = 2.0
+
+[default.resilience.circuit_breaker.circuits]
+service_a_breaker = { fail_max = 2, reset_timeout_sec = 1.0 }

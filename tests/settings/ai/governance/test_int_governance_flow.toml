@@ -1,0 +1,26 @@
+# tests/settings/ai/governance/test_int_governance_flow.toml
+[default]
+app_name = "GovernanceIntegrationTest"
+log_level = "DEBUG"
+
+[default.ai.governance]
+enabled = true
+
+[default.ai.governance.pii_sanitizer]
+enabled = true
+
+[default.ai.governance.pii_sanitizer.patterns]
+[default.ai.governance.pii_sanitizer.patterns.EMAIL]
+regex = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+replacement = "<EMAIL_REDACTED>"
+
+[default.ai.governance.pii_sanitizer.patterns.PHONE]
+regex = "\\d{3}-\\d{3}-\\d{4}"
+replacement = "<PHONE_REDACTED>"
+
+[default.ai.governance.keyword_blocklist]
+enabled = true
+blocklist = ["forbidden_project_x", "sql_injection"]
+
+[default.ai.governance.rate_limiter]
+enabled = false

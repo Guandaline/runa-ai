@@ -1,0 +1,12 @@
+# tests/settings/lifecycle/test_int_athomic_startup.toml
+[default]
+app_name = "LocalIntegrationTestApp"
+timeout = 2.0 # Use a shorter timeout for tests
+
+[default.database.kvstore]
+default_connection_name = "default_local"
+
+[default.database.kvstore.connections.default_local]
+enabled = true
+[default.database.kvstore.connections.default_local.provider]
+backend = "local"

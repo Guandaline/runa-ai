@@ -1,0 +1,21 @@
+# tests/settings/ai/test_int_llm_ollama.toml
+[default]
+app_name = "OllamaLLMIntegrationTest"
+log_level = "DEBUG"
+
+[default.ai.connections]
+default_connection_name = "ollama_llm_main"
+
+    [default.ai.connections.connections.ollama_llm_main]
+    enabled = true
+    backend = "openai" 
+    default_model = "llama3"
+    timeout = 120.0
+
+    [default.ai.connections.connections.ollama_llm_main.generation]
+    temperature = 0.7
+    max_output_tokens = 2048
+
+    [default.ai.connections.connections.ollama_llm_main.provider]
+    backend = "ollama"
+    base_url = "http://localhost:11434"

@@ -1,0 +1,219 @@
+[project]
+name = "athomic"
+version = "3.40.0"
+description = "Core services for athomic platform"
+authors = [
+    {name = "Guandaline",email = "vhguandaline@gmail.com"}
+]
+
+readme = "README.md"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "athomic" 
+version = "3.40.0"
+description = "Core services for athomic platform"
+authors = ["Guandaline <vhguandaline@gmail.com>"]
+packages = [
+    { include = "nala", from = "src" },
+    ]
+
+[tool.semantic_release]
+version_toml = [ 
+    "pyproject.toml:tool.poetry.version",
+    "pyproject.toml:project.version"
+    ]
+tag_format = "{version}"
+major_on_zero = true 
+changelog_file = "CHANGELOG.md"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = ["migrations", ".venv", "__pycache__", "docs/", ".md"]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+uvicorn = ">=0.34.0,<0.38.0"
+fastapi = "^0.119.0"  
+pydantic = "^2.12.4"     
+loguru = ">=0.7.3,<0.8.0"
+psutil = ">=7.0.0,<8.0.0"
+tenacity = ">=9.0.0,<10.0.0"
+aiocache = ">=0.12.3,<0.13.0"
+python-consul2 = ">=0.1.5,<0.2.0"
+motor = ">=3.7.0,<4.0.0"
+dynaconf = ">=3.2.10,<4.0.0"
+hvac = "^2.3.0"
+google-cloud-secret-manager = "^2.24.0"
+boto3 = "^1.40.51"
+fernet = "^1.0.1"
+azure-identity = "^1.25.1"
+azure-keyvault-secrets = "^4.10.0"
+pyjwt = "^2.10.1"
+prometheus-client = "^0.23.1"
+cachetools = "^6.2.1"
+redis = {extras = ["hiredis"], version = "^6.4.0"}
+limits = "^5.6.0"
+protobuf = "^6.32.1"
+prometheus-fastapi-instrumentator = "^7.1.0"
+aiobreaker = "^1.2.0"
+aiokafka = "^0.12.0"
+httpx = "^0.28.1"
+aiofiles = "^25.1.0"
+aiohttp = "^3.13.3"
+google-cloud-storage = {extras = ["aio"], version = "^3.4.1"}
+rq = "^2.6.0"
+confluent-kafka = "^2.12.0"
+pyparsing = "^3.2.5"
+orjson = "^3.11.3"
+brotli-asgi = "^1.4.0"
+uvloop = "^0.21.0"
+taskiq = {extras = ["redis"], version = "^0.11.18"}
+taskiq-redis = "^1.1.2"
+dramatiq = "^1.18.0"
+opentelemetry-sdk = "^1.36.0"
+opentelemetry-instrumentation = "^0.57b0"
+opentelemetry-instrumentation-fastapi = "^0.57b0"
+opentelemetry-instrumentation-requests = "^0.57b0"
+opentelemetry-exporter-otlp = "^1.36.0"
+opentelemetry-semantic-conventions = "^0.57b0"
+opentelemetry-api = "^1.36.0"
+opentelemetry-instrumentation-pymongo = "^0.57b0"
+opentelemetry-instrumentation-redis = "^0.57b0"
+opentelemetry-instrumentation-kafka-python = "^0.57b0"
+opentelemetry-instrumentation-logging = "^0.57b0"
+uhashring = "^2.4"
+temporalio = "^1.19.0"
+neo4j = "^6.0.3"
+instructor = ">=1.3.3"
+sentence-transformers = "^5.1.2"
+qdrant-client = "^1.16.1"
+google-genai = "^1.53.0"
+pypdf = "^6.4.1"
+e2b-code-interpreter = "^2.4.1"
+tiktoken = "^0.12.0"
+gcloud-aio-storage = "^9.6.1"
+langgraph = "^1.0.6"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[tool.poetry.group.ml.dependencies]
+torch = [
+    { version = "2.5.1", source = "pytorch-cpu", markers = "sys_platform == 'linux'" },
+    { version = "2.5.1", source = "pypi", markers = "sys_platform != 'linux'" }
+]
+transformers = "^4.57"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.poetry.group.config.dependencies]
+pydantic = "*"
+pydantic-settings = "^2.11.0"
+
+[tool.poetry.group.auth.dependencies]
+authlib = "*"
+bcrypt = "*"
+fastapi = "*"
+firebase-admin = "*"
+passlib = "*"
+pydantic = "*"
+
+[tool.poetry.group.rate_limiting.dependencies]
+redis = "*"
+
+[tool.poetry.group.testing.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+
+[tool.poetry.group.api.dependencies]
+authlib = "*"
+bcrypt = "*"
+fastapi = "*"
+firebase-admin = "*"
+motor = "*"
+passlib = "*"
+pydantic = {extras = ["email"], version = "^2.12.0"}
+beanie = "^2.0.0"
+
+[tool.poetry.group.communication.dependencies]
+httpx = "*"
+
+[tool.poetry.group.communication_pubsub.dependencies]
+google-cloud-pubsub = "*"
+prometheus_client = "*"
+
+[tool.poetry.group.caching.dependencies]
+redis = "*"
+
+[tool.poetry.group.logging.dependencies]
+python-json-logger = "*"
+
+[tool.poetry.scripts]
+nala = "nala.cli.main:main"
+snapshot = "helpers.snapshot:cli"
+test = "pytest:main"
+
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry.group.dev.dependencies]
+aiohttp = "^3.13.3"
+pytest = "^8.4.2"
+pytest-asyncio = "^1.2.0"
+httpx = "^0.28.1"
+fakeredis = {extras = ["aioredis"], version = "^2.32.0"}
+python-semantic-release = "^10.4.1"
+black = "^25.9.0"
+ruff = "^0.14.0"
+bandit = "^1.8.6"
+mypy = "^1.18.2"
+pydantic = "^2.12.0"
+monkeytype = "^23.3.0"
+no-implicit-optional = "^1.4"
+isort = "^7.0.0"
+libcst = "^1.8.5"
+pre-commit = "^4.3.0"
+mkdocs = "^1.6.1"
+mkdocs-material = "^9.6.21"
+mkdocstrings = {extras = ["python"], version = "^0.30.1"}
+detect-secrets = "^1.5.0"
+radon = "^6.0.1"
+pytest-mock = "^3.15.1"
+snakeviz = "^2.2.2"
+langdetect = "^1.0.9"
+pytest-cov = "^7.0.0"
+pytest-benchmark = "^5.1.0"
+mkdocs-mermaid2-plugin = "^1.2.2"
+coverage-badge = "^1.1.2"
+python-dotenv = "^1.1.1"
+respx = "^0.22.0"
+pyfakefs = "^5.10.0"
+opentelemetry-instrumentation-httpx = ">=0.40b0, <1.0"
+tenacity = "^9.1.2"
+pytest-httpx = "^0.35.0"
+asgi-lifespan = "^2.1.0"
+aiosmtpd = "^1.4.6"
+pytest-timeout = "^2.4.0"
+locust = "^2.41.6"
+kafka-python = "^2.2.15"
+mkdocs-gen-files = "^0.5.0"
+mkdocs-literate-nav = "^0.6.2"
+mkdocs-section-index = "^0.3.10"
+
