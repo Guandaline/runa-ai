@@ -66,13 +66,6 @@ vault.token
 *.hlc
 infra/database/document/mongo/mongo-keyfile
 monitoring/alertmanager/config.yml
-diff.txt
-todo.md
-tree.txt
-prompts.md
-system_context.md
-edit.diff
-site/
 
 # Terraform state
 terraform.tfstate
@@ -105,4 +98,3 @@ crash.log
 infra/database/vector/qdrant/qdrant_data
 
 helpers/
-Makefile

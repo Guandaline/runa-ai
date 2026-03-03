@@ -7,83 +7,45 @@ timeout = 10.0
 #               ai
 # =================================
 
-[ai.connections.connections.default]
-backend = "vertex"
-default_model = "gemini-pro"
-[ai.connections.connections.default.provider]
-project_id = "..."
+[default.ai.connections]
+default_connection_name = "default_local"
 
-[ai.connections.connections.smart_agent]
+[default.ai.connections.connections.default_local]
+enabled = true
+backend = "openai"  
+default_model = "llama3.2:1b"
+timeout = 120.0
+
+[default.ai.connections.connections.default_local.provider]
 backend = "openai"
-default_model = "gpt-4"
-[ai.connections.connections.smart_agent.provider]
-api_key = "..."
+base_url = "http://localhost:11434/v1"
+api_key = "ollama" # Dummy key
+organization_id = "org-local"
 
-[nala.athomic.ai.llm.connection_settings]
-default_model = "gemini-1.5-flash-002"
-
-[default.ai.documents.splitter]
-strategy = "token"
-chunk_size = 512       # 512 tokens
-chunk_overlap = 50
-encoding_name = "cl100k_base" # gpt-4 encoding
 
 # =================================
-#           control
+#           AI AGENTS
 # =================================
 
-[default.control]
+[default.ai.agents]
 enabled = true
+default_profile = "hr_assistant"
 
-# =================================
-#     control - feature flags
-# =================================
+# The profile must be nested under .connections
+[default.ai.agents.profiles.connections.hr_assistant]
+name = "hr_assistant"
+connection_name = "default_local" 
+tools = [
+    "get_remaining_vacation_days",
+    "request_time_off",
+    "get_company_policy",
+]
 
-[default.control.feature_flags]
-_live_keys_config = { cache_ttl_seconds = "control.feature_flags.cache_ttl_seconds" }
+[default.ai.agents.profiles.connections.hr_assistant.persistence]
 enabled = true
-backend = "local"
-cache_ttl_seconds = 60
+backend = "kv"
+kv_connection_name = "default_local"
 
-[default.control.feature_flags.provider]
-backend = "local"
-flags = { new_dashboard = true, experimental_report = false, enable_multi_tenant_feature = false }
-
-# =================================
-#      control - live config
-# =================================
-
-[default.control.live_config]
-enabled = true
-watch_prefix = "nala/config/"
-
-# =================================
-#      control - scheduler
-# =================================
-
-[default.control.scheduler]
-enabled = true
-
-[default.control.scheduler.provider]
-backend = "custom_kv"
-
-[default.control.scheduler.provider.kv_store_settings]
-backend = "redis"
-enabled = true
-
-[default.control.scheduler.provider.kv_store_settings.provider]
-backend = "redis"
- uri = "redis://localhost:6379/0"
-
-[default.control.scheduler.worker]
-poll_interval = 0.01
-
-[default.control.scheduler.worker.kv_store_settings]
-enabled = true
-
-[default.control.scheduler.worker.kv_store_settings.provider]
-backend = "redis"
-uri = "redis://localhost:6379/0"
 
 # =================================
 #           database
@@ -91,81 +53,30 @@ uri = "redis://localhost:6379/0"
 
 [default.database]
 
-[default.database.documents]
-default_connection_name = "default_mongo"
-
-[default.database.documents.connections.default_mongo]
-enabled = true
-backend = "mongo"
-
-[default.database.documents.connections.default_mongo.provider]
-enabled = true
-backend = "mongo"
-url = "mongodb://nala_user:nala_password@localhost:27017,localhost:27018,localhost:27019/?replicaset=rs0" # pragma: allowlist secret # nosonar
-multi_tenancy_enabled = true
-
-[default.database.documents.connections.audit_mongo]
-enabled = true
-backend = "mongo" 
-
-[default.database.documents.connections.audit_mongo.provider]
-enabled = true
-backend = "mongo"
-url = "mongodb://nala_user:nala_password@localhost:27017,localhost:27018,localhost:27019/?replicaset=rs0" # pragma: allowlist secret # nosonar
-multi_tenancy_enabled = true
-
 # ------- kvstore -------
 
 [default.database.kvstore]
-default_connection_name = "default_redis"
+default_connection_name = "default_local"
 
-[default.database.kvstore.connections.default_redis]
+[default.database.kvstore.connections.default_local]
 enabled = true
-backend = "redis"
+backend = "local"
 
-[default.database.kvstore.connections.default_redis.provider]
+[default.database.kvstore.connections.default_local.provider]
 enabled = true
-backend = "redis"
-uri = "redis://localhost:6379/15"
-decode_responses = true
-apply_key_resolver = true
-apply_default_ttl = true
-multi_tenancy_enabled = true
+backend = "local"
 
-[[default.database.kvstore.connections.default_redis.wrappers]]
+
+[[default.database.kvstore.connections.default_local.wrappers]]
 name = "default_ttl"
 enabled = true
 default_ttl_seconds = 3600
 
-[[default.database.kvstore.connections.default_redis.wrappers]]
+[[default.database.kvstore.connections.default_local.wrappers]]
 name = "key_resolver"
 enabled = true
 namespace = "my-app"
 static_prefix = "cache"
-
-# --------- grah ----------
-
-[default.database.graph]
-default_connection_name = "default_graph"
-[default.database.graph.connections.default_graph]
-enabled = true
-backend = "neo4j"
-[default.database.graph.connections.default_graph.provider]
-backend = "neo4j"
-uri = "bolt://localhost:7687"
-user = "neo4j"
-password = "password" # pragma: allowlist secret
-
-
-# =================================
-#             events
-# =================================
-
-[default.events]
-enabled = true
-
-[default.events.provider]
-backend = "local"
 
 # =================================
 #           performance
@@ -173,14 +84,6 @@ backend = "local"
 
 [default.performance]
 enabled = true
-
-# =================================
-#           compression
-# =================================
-
-[default.performance.compression]
-enabled = true
-minimum_size = 1024
 
 # =================================
 #              cache
@@ -240,195 +143,6 @@ enabled = true
 track_consumer_factory = true
 
 
-# =================================
-#           lineage
-# =================================
-
-[lineage]
-enabled = true
-
-[lineage.store]
-backend = "composite"
-backends = ["document", "graph"]
-
-[lineage.store.document]
-collection_name = "audit_events"
-document_connection_name = "default_mongo"
-
-[lineage.store.graph]
-graph_connection_name = "analytics_graph"
-
-
-# =================================
-#           integration
-# =================================
-
-[default.integration]
-
-[default.integration.consul]
-enabled = true
-host = "localhost"
-port = 8500
-scheme = "http"
-ssl_verify = false 
-
-[default.integration.config_providers]
-enabled = true
-backend = "consul"
-
-[[default.integration.config_providers.providers]]
-enabled = true
-backend = "consul"
-host = "localhost"
-port = 8500
-scheme = "http"
-ssl_verify = false 
-
-[default.integration.outbox_publisher]
-poll_interval_seconds = 5
-
-# =================================
-#      integration - messaging
-# =================================
-
-[default.integration.messaging]
-enabled = true
-backend = "kafka" 
-idempotency_check_enabled = true
-idempotency_key_ttl_seconds = 86400
-delay_strategy_backend = "kafka_topic_delay_strategy"
-
-[default.integration.messaging.batch]
-fetch_timeout_ms = 200
-size = 200
-max_linger_ms = 500
-max_bytes = 524288
-backend = "kafka" 
-
-[default.integration.messaging.provider]
-backend = "kafka"
-[default.integration.messaging.provider.producer]
-bootstrap_servers = ["localhost:9092"]
-acks = 1
-client_id = "nala-test-producer"
-
-[default.integration.messaging.provider.consumer]
-bootstrap_servers = ["localhost:9092"]
-group_id = "nala-test-consumer-group"
-auto_offset_reset = "earliest"
-enable_auto_commit = true
-
-
-[default.integration.messaging.local]
-host = "localhost"
-port = 5672
-user = "guest"
-virtual_host = "/"
-
-[[default.integration.messaging.payload_pipeline]]
-step = "serializer"
-
-[[default.integration.messaging.payload_pipeline]]
-step = "compression"
-
-[[default.integration.messaging.payload_pipeline]]
-step = "crypto"
-[default.integration.messaging.payload_pipeline.settings]
-backend = "fernet"
-fernet_key = { path = "crypto", key = "special_messaging_key" }
-
-[default.integration.messaging.claim_check]
-enabled = true
-large_message_threshold_bytes = 102400
-
-[default.integration.messaging.claim_check.storage.provider]
-backend = "gcs"
-bucket_name = "my-large-messages-bucket"
-
-
-# =================================
-#     integration-republisher 
-# =================================
-
-[default.integration.messaging.republisher]
-enabled = true # it's good practice to add this
-delay_strategy_backend = "scheduler"
-delay_topics = { "3" = "__nala_delay_3s", "300" = "__nala_delay_5m", "3600" = "__nala_delay_1h", "86400" = "__nala_delay_24h" }
-
-[default.integration.messaging.republisher.producer]
-acks = "all" 
-client_id = "republisher-producer"
-
-[default.integration.messaging.republisher.consumer]
-group_id = "republisher-delay-consumers"
-auto_offset_reset = "earliest"
-
-
-# =================================
-#        integration-tasks 
-# =================================
-
-[default.integration.tasks]
-enabled = true
-
-[[default.integration.tasks.providers]]
-backend = "taskiq" 
-broker_type = "stream"
-
-[default.integration.tasks.provider.kvstore]
-enabled = true
-[default.integration.tasks.provider.kvstore.provider]
-backend = "redis"
-uri = "redis://localhost:6379/13"
-
-[[default.integration.tasks.providers]]
-backend = "local"
-enabled = true
-
-
-# =================================
-#          notifications
-# =================================
-
-[default.notifications]
-enabled = true
-default_from_email = "test.sender@nala.com"
-
-[default.notifications.provider]
-backend = "smtp"
-host = "localhost" # or "mailhog" if the app runs inside docker
-port = 1025
-username = "" # mailhog does not require authentication
-password = ""
-use_tls = false # the connection with mailhog is simple, no encryption
-use_ssl = false
-
-
-# =================================
-#           serializer
-# =================================
-
-
-[default.serializer]
-backend = "orjson"
-
-# =================================
-#           translation
-# =================================
-
-[default.translations]
-# the keys here must match the aliases defined in the pydantic model
-translations_backend = "consul"
-translations_path = "config/i18n" # prefix in consul
-translations_message_pattern = "{storage_path_prefix}/messages/{language}.json" # pattern to fetch messages
-translations_available_languages = "languages.json" # key for the available languages json
-translations_default_language = "en-us" # default language
-translations_enable = true
-
-# =================================
-#           resilience
-# =================================
-
 [default.resilience] 
 
 # =================================
@@ -476,26 +190,6 @@ pro = "100/minute"
 internal = "nolimit"
 
 # =================================
-#        adaptive throttling
-# =================================
-
-[default.resilience.adaptive_throttling]
-enabled = false
-state_store_backend = "redis"
-state_store_uri = "redis://localhost:6379/2" 
-state_store_ttl_seconds = 300
-
-metrics_fetcher_type = "prometheus"
-metrics_fetcher_url = "http://localhost:9090" 
-prometheus_queries = { latency_p99 = "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job='my_api'}[2m])) by (le))", error_rate = "sum(rate(http_requests_total{job='my_api', status=~'5..', type='http'}[2m])) / sum(rate(http_requests_total{job='my_api', type='http'}[2m])) * 100" }
-decision_algorithm = "threshold"
-algorithm_params = { latency_metric_key = "latency_p99", latency_threshold_ms = 800.0, error_metric_key = "error_rate", error_threshold_percent = 5.0, reduction_factor = 0.8, recovery_threshold_factor = 0.9, increase_factor = 1.1 }
-check_interval_seconds = 20
-policies_to_adapt = ["free", "default"]
-min_limit_factor = 0.1
-max_limit_factor = 1.0
-
-# =================================
 #           circuit breaker
 # =================================
 
@@ -521,116 +215,3 @@ reset_timeout_sec = 10.0
 
 [default.resilience.circuit_breaker.circuits."__main__.decorated_async_control"] 
 fail_max = 3
-
-# =================================
-#           bulkhead
-# =================================
-
-[default.resilience.bulkhead]
-enabled = true
-default_limit = 20 
-
-[default.resilience.bulkhead.policies]
-payment_api = 5 # sample
-user_profile_service = 15 # sample
-
-
-# =================================
-#     resilience - idempotency
-# =================================
-
-[nala.resilience.idempotency]
-enabled = true
-default_ttl_seconds = 3600  # 1 hour
-default_lock_timeout_seconds = 5
-
-# =================================
-#     resilience - sharding
-# =================================
-
-[nala.resilience.sharding]
-enabled = true
-
-[nala.resilience.sharding.policies.outbox_publishers]
-group_name = "outbox-publishers"
-
-
-# =================================
-#           security
-# =================================
-
-[default.security]
-
-[default.security.secrets]
-enabled = true
-backend = "vault"
-
-[default.security.secrets.provider]
-backend = "vault"
-enabled = true
-addr = "http://localhost:8200"
-token_path = "./devtools/vault/env/vault.token"
-mount_point = "secret"
-path_prefix = "nala" # pragma: allowlist secret
-token = "root"
-
-[default.security.auth]
-
-[default.security.auth.jwt]
-enabled = false 
-jwt_secret_key = "xyz" # pragma: allowlist secret
-secret_key = "super-secret" # pragma: allowlist secret
-algorithm = "hs256"
-expiration_minutes = 30
-
-[default.security.auth.api_key]
-enabled = true
-header_name = "x-api-key"
-secret_key = "super-secret" # pragma: allowlist secret
-document_db_connection_name = "default_mongo"
-
-# =================================
-#           profiling
-# =================================
-
-[default.profiling]
-enabled = false         
-profiler = "cprofile"
-output_dir = "..tests_history/profile"
-
-# =================================
-#           plugins
-# =================================
-
-
-[default.plugins]
-notify_on_hook_error = true
-hook_error_recipients = ["dev-alerts@yourcompany.com", "sre-team@yourcompany.com"]
-
-
-# =================================
-#             usage
-# =================================
-
-[default.usage]
-enabled = true
-strict_mode = false
-emit_metrics = true
-
-[default.usage.aggregation]
-enabled = true
-window_seconds = 300
-max_events_in_memory = 5000
-
-[default.usage.emission]
-enabled = true
-emit_to_outbox = false
-emit_to_logs = false
-include_context_snapshot = true
-
-[default.usage.emission.provider]
-backend = "messaging"
-enabled = true
-connection_name = "default_kafka"
-topic = "platform.usage.events.v1"
-auto_create_topic = true

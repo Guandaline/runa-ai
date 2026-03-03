@@ -58,7 +58,6 @@ nav:
   - 'Home': 'index.md'
   - 'Architecture':
     - 'Overview': 'architecture/index.md'
-    - 'Dependency Injection': 'architecture/dependency-injection.md'
     - 'Athomic Layer': 'architecture/athomic-layer.md'
     - 'Domain Layer': 'architecture/domain-layer.md'
   - 'Athomic Layer':

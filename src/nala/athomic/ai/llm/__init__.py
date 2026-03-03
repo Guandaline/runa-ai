@@ -14,6 +14,7 @@ from .factory_manager import LLMManagerFactory
 from .protocol import LLMProviderProtocol
 from .providers import GoogleGenAIProvider, OpenAIProvider
 from .registry import LLMProviderRegistry, llm_registry
+from .manager import LLMManager, llm_manager
 
 __all__ = [
     "LLMProviderProtocol",
@@ -31,4 +32,6 @@ __all__ = [
     "OpenAIProvider",
     "GoogleGenAIProvider",
     "LLMManagerFactory",
+    "LLMManager",
+    "llm_manager",
 ]

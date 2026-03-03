@@ -102,5 +102,3 @@ service_name_override = "my-awesome-service"
 ::: nala.athomic.observability.decorators.with_observability
 
 ::: nala.athomic.observability.get_tracer
-
-::: nala.athomic.observability.telemetry.adapters.messaging_adapter.MessagingTelemetryAdapter

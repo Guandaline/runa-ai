@@ -1,75 +1,73 @@
-# athomic
 
-![Coverage](https://github.com/test-nala/athomic/blob/coverage-badges/coverage.svg)
+# Athomic HR Assistant - Technical Challenge
 
-# Teste Nala: Athomic
+This project implements an intelligent HR Assistant capable of managing vacation requests, checking balances, and retrieving company policies. The implementation leverages a stable slice of the **Athomic Framework (WIP)**, focusing on scalable infrastructure for AI Agents.
 
-**The IDP for Resilient, Observable, and High-Performance Python Microservices.**
+## Architecture Overview
 
-Build robust services in record time, focusing on what truly matters: your business logic.
+The project's architecture is inherited from the **Athomic** framework, following strict separation of concerns and service-oriented design:
 
-[![CI Status](https://img.shields.io/github/actions/workflow/status/test-nala/athomic/ci.yml?branch=main&style=for-the-badge)](https://github.com/test-nala/athomic/actions)
-[![Release](https://img.shields.io/github/v/release/test-nala/athomic?style=for-the-badge)](https://github.com/test-nala/athomic/releases)
-[![Commitizen friendly](https://img.shields.io/badge/Commitizen-friendly-brightgreen.svg?style=for-the-badge)](http://commitizen.github.io/cz-cli/)
-[![License](https://img.shields.io/github/license/test-nala/athomic?style=for-the-badge)](https://github.com/test-nala/athomic/blob/main/LICENSE)
+* **`src/nala/athomic` (Core Infra/AI)**: The infrastructure layer. It manages the Agent lifecycle, the ReAct (Reasoning + Acting) loop, LLM orchestration, and state persistence. It includes centralized management of execution context, including tenant, request, and trace identifiers.
+* **`src/nala/domain` (Business Logic)**: Contains the domain-specific tools required for this challenge (Vacation, Policy, and Time-Off requests). These tools are decoupled from the AI engine, making them independently testable.
+* **`src/nala/api` (Interface Layer)**: The entry point of the application. It exposes the `/chat` endpoint using FastAPI and contains the `HRAssistantService`, which orchestrates the flow between the API request and the HR Agent.
 
 ---
 
-## 🔥 The Problem: The Hidden Complexity of Microservices
+## Key Technical Features
 
-Building microservices goes far beyond writing business logic. Engineering teams spend precious time repeatedly solving the same infrastructure challenges:
-- How to ensure that communication between services is **resilient to failures**?
-- How to gain **complete visibility** (Logs, Metrics, Traces) into what's happening in production?
-- How to maintain code **quality, consistency, and security** as the team grows?
-- How to ensure the **developer experience (DevEx)** is simple and productive?
+### Stateless Agent Orchestration
+Unlike traditional implementations that store state within the Agent instance, the Athomic-based Agent is **Stateless**. Conversation history and runtime variables are managed within the local scope of the `run` method. 
+* **Benefit**: This allows the `HRAssistantService` to use the Agent as a **Singleton**, handling multiple concurrent requests without state leakage between different users or sessions.
 
-Solving these problems from scratch for every new service is inefficient, expensive, and risky.
+### Runtime Context Injection
+To ensure high reliability when using small-scale models (such as **Llama 3.2 1B**), we implemented a safety middleware for argument injection.
+* **How it works**: If the LLM fails to extract mandatory parameters (like `employee_id`) from the prompt, the Agent's execution engine automatically injects the validated data from the request context variables before triggering the tool.
 
-## ✨ The Solution: The Athomic Layer
-
-**Teste Nala** (internally named **Athomic**) is an opinionated and extensible IDP that solves these challenges once and for all. It provides a solid, production-ready foundation, allowing your developers to focus exclusively on delivering value.
-
-We abstract away the infrastructure complexity so you don't have to.
-
----
-
-## 🚀 Value Proposition & Key Features
-
-With Athomic, your team gains superpowers to build world-class services.
-
-### 🛡️ Native Resilience (Bulletproof Services)
-Build self-healing systems that handle failures gracefully.
-- **Circuit Breaker:** Automatically isolates failing components.
-- **Smart Retries:** Configures retry mechanisms with exponential backoff.
-- **Rate Limiter:** Protects your services against traffic spikes.
-- **Fallback:** Defines alternative behaviors in case of an error.
-
-### 🔭 Autopilot Observability (The 3 Pillars)
-Gain deep insights into your application's behavior effortlessly.
-- **Structured Logging:** JSON logs, ready to be ingested by any platform.
-- **Prometheus Metrics:** Export performance and business metrics in a standardized way.
-- **Distributed Tracing (OpenTelemetry):** Trace requests across multiple services with a unified context.
-
-### 💻 Superior Developer Experience (Superior DevEx)
-A modern tool ecosystem that ensures quality and productivity from day one.
-- **Dependency Management with Poetry:** A reproducible and deterministic development environment.
-- **Automated Code Quality:** `black`, `ruff`, and `mypy` ensure clean, error-free code, enforced with `pre-commit` hooks.
-- **One-Command Local Environment:** `docker-compose` to spin up all necessary infrastructure (Kafka, Redis, Vault, etc.).
-
-### 🏗️ Solid & Extensible Architecture
-A decoupled and explicit codebase that promotes the best engineering practices.
-- **Simplified Dependency Injection:** A clear application lifecycle that facilitates testing and maintenance.
-- **Proven Design Patterns:** Use of Factory, Facade, and Registry for a clean architecture.
-- **Easy to Extend:** Add new infrastructure integrations (e.g., a new database, a new message broker) without altering the core.
+### Unified Observability and Tracing
+The project implements a cohesive tracing system where identity is managed by the `ContextVarManager`. 
+* The `request_id` and `trace_id` are registered as thread-safe and async-safe variables.
+* These identifiers are propagated from the API middleware through the HR Service and into the Tool Execution layer.
+* This ensures that every log entry and tool action is tied to the original request identifier for distributed tracing.
 
 ---
 
-## 🤝 Contributing
+## Tech Stack
 
-This is a project that thrives on collaboration. If you wish to contribute, please read our `CONTRIBUTING.md` to learn about our development process and our `CODE_OF_CONDUCT.md` to understand our community standards.
+* **Base Framework**: Athomic (Internal WIP Framework).
+* **API**: FastAPI.
+* **LLM Engine**: Ollama / OpenAI Protocol (Optimized for Llama 3.2 1B).
+* **Documentation**: Detailed project documentation available via **MkDocs**.
+    * **Architecture Decision Records (ADRs)**: Included in the documentation to provide transparency into the framework's design choices and architectural evolution.
 
 ---
 
-Made with ❤️ by the Guandaline for Test Nala
+## Getting Started
 
->© test-nala 2025
+The project includes a `Makefile` to simplify setup and execution.
+
+```bash
+# 1. Install dependencies and setup environment
+make install
+
+# 2. Start infrastructure (Containers/Services)
+make up
+
+# 3. Run the application locally
+make run
+```
+
+### Testing the Chat
+
+You can test the assistant using the following `curl` command:
+
+```bash
+curl -X 'POST' [http://0.0.0.0:8000/chat](http://0.0.0.0:8000/chat) 
+     -H 'Content-Type: application/json' 
+     -d '{
+       "employee_id": "emp_01",
+       "message": "How many vacation days do I have left?",
+       "session_id": "session_abc_123"
+     }'
+```
+
+Or at: http://0.0.0.0:8000/docs

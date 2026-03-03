@@ -4,6 +4,7 @@ from typing import Optional
 from nala.athomic.config import get_settings
 from nala.athomic.config.schemas.app_settings import AppSettings
 from nala.athomic.database.factory import connection_manager_factory
+from nala.athomic.ai.llm import llm_manager
 from nala.athomic.observability import get_logger
 from nala.athomic.observability.metrics import MetricSchedulerFactory
 
@@ -20,8 +21,9 @@ def _register_level_10_services(settings: AppSettings) -> None:
     )
 
 
-def _register_level_20_services(settings: AppSettings) -> None:
-    pass  # Placeholder
+def _register_level_20_services() -> None:
+    
+    lifecycle_registry.register(llm_manager.service_name, llm_manager, priority=20)
 
 
 def _register_level_50_services(settings: AppSettings) -> None:
@@ -51,7 +53,7 @@ def register_athomic_infra_services(settings: Optional[AppSettings] = None) -> N
     _register_level_10_services(settings)
 
     # --- Level 20: Infrastructure Clients depending on base connections ---
-    _register_level_20_services(settings)
+    _register_level_20_services()
 
     # --- Level 50: Infrastructure Business Logic Services ---
     _register_level_50_services(settings)

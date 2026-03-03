@@ -1,11 +1,6 @@
-# Welcome to the Teste Nala
+# Welcome to the Test Runa-ai
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/guandaline/athomic/ci.yml?branch=main)](https://github.com/guandaline/athomic/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/guandaline/athomic.svg)](https://codecov.io/gh/guandaline/athomic)
-[![License](https://img.shields.io/github/license/guandaline/athomic)](https://github.com/guandaline/athomic/blob/main/LICENSE)
-[![Python Version](https://img.shields.io/pypi/pyversions/athomic.svg)](https://pypi.org/project/athomic/)
-
-**Teste Nala** is an opinionated, production-ready engine for building resilient, observable, and scalable microservices in Python. It provides a robust foundation—the **Athomic Layer**—that handles cross-cutting concerns, allowing developers to focus purely on business logic.
+**Test Runa-ai** is an opinionated, production-ready engine for building resilient, observable, and scalable microservices in Python. It provides a robust foundation—the **Athomic Layer**—that handles cross-cutting concerns, allowing developers to focus purely on business logic.
 
 Our philosophy is grounded in battle-tested software engineering principles like **SOLID**, **Single Responsibility (SRP)**, and **Dependency Injection (DI)**, ensuring that applications built on this engine are maintainable, scalable, and easy to test.
 
@@ -24,8 +19,8 @@ Follow these steps to get a local development environment up and running.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/guandaline/athomic.git
-cd athomic
+git@github.com:Guandaline/runa-ai.git
+cd runa-ai
 ```
 
 ### 2. Start Infrastructure Services
@@ -59,7 +54,6 @@ You can now access the API documentation at `http://127.0.0.1:8000/docs`.
 ## Explore the Documentation
 
 - **[Architecture Overview](./architecture/index.md)**: Dive deep into the layered architecture and design principles.
-- **[Dependency Injection](./architecture/dependency-injection.md)**: Understand how services are managed.
 
 ### Athomic Layer Modules
 

@@ -2,6 +2,7 @@ include:
   - ./ai/llm/ollama/docker-compose.yml
   - ./ai/llm/ollama-qwen05b/docker-compose.yml
   - ./ai/llm/nomic-embed-text/docker-compose.yml
+  - ./database/kvstore/redis/docker-compose.yml
 
 networks:
   nala_network:

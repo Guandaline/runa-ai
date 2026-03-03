@@ -1,20 +1,20 @@
 import time
-import uuid
 from typing import Any, Dict, List, Optional
 
+from nala.athomic.context.context_vars import get_request_id
 from nala.athomic.ai.llm.base import BaseLLM
-from nala.athomic.ai.schemas import ChatMessage, MessageRole
+from nala.athomic.ai.schemas import ChatMessage, MessageRole, ToolCall
 from nala.athomic.ai.schemas.llms import LLMResponse
 from nala.athomic.ai.schemas.tools import ToolOutput
 from nala.athomic.config.schemas.ai import AgentProfileSettings
 from nala.athomic.observability import get_logger
 from nala.athomic.observability.tracing.instrumentation import AgentTracing
 from nala.athomic.services import BaseService
-from nala.athomic.services.exceptions import ServiceNotReadyError
 
 from ..tools.protocol import AIToolProtocol
 from .executors.base import BaseToolExecutor
 from .exreptions import AgentMaxIterationsError
+from .parsers import AgentResponseParser
 from .persistence.protocol import CheckpointProtocol
 
 logger = get_logger(__name__)
@@ -22,12 +22,11 @@ logger = get_logger(__name__)
 
 class AgentService(BaseService):
     """
-    The core runtime service for an AI Agent.
+    Stateless Agent Orchestrator.
 
-    This service implements the ReAct (Reasoning + Acting) loop, orchestrating
-    interactions between the LLM (Reasoning Engine) and the Tool Executor (Acting Engine).
-    It optionally supports state persistence via a CheckpointProtocol, allowing for
-    long-running, resilient conversations.
+    This service implements the ReAct loop without storing conversation state
+    in instance variables. All state is managed locally within the run method
+    to ensure thread safety and allow singleton usage.
     """
 
     def __init__(
@@ -39,14 +38,7 @@ class AgentService(BaseService):
         thread_id: Optional[str] = None,
     ):
         """
-        Initializes the AgentService.
-
-        Args:
-            settings: Configuration profile defining agent behavior and constraints.
-            llm: The Language Model provider instance.
-            executor: The strategy for executing tool calls.
-            checkpointer: Optional provider for persisting agent state.
-            thread_id: Unique identifier for the conversation thread.
+        Initializes the agent engine. Instance variables are for shared resources only.
         """
         super().__init__(
             service_name=f"agent_service_{settings.name}",
@@ -56,225 +48,130 @@ class AgentService(BaseService):
         self.llm = llm
         self.executor = executor
         self.checkpointer = checkpointer
+        # Instance thread_id acts as a default if not provided in run()
         self.thread_id = thread_id
 
         self.tracing = AgentTracing()
-
+        self.parser = AgentResponseParser()
         self._available_tools: List[AIToolProtocol] = []
 
-        # Internal State (Mutable)
-        self._history: List[ChatMessage] = []
-        self._variables: Dict[str, Any] = {}
-        self._current_step: int = 0
-
     async def _connect(self) -> None:
-        """
-        Initializes the agent resources.
-
-        Connects the Tool Executor and the Persistence Checkpointer (if it is a
-        managed service), ensuring all dependencies are ready before handling requests.
-        """
+        """Initializes shared tool resources."""
         if not self.executor.is_ready():
             await self.executor.connect()
             await self.executor.wait_ready()
 
-        if isinstance(self.checkpointer, BaseService):
-            if not self.checkpointer.is_ready():
-                await self.checkpointer.connect()
-                await self.checkpointer.wait_ready()
-
         self._available_tools = self.executor.get_tools_for_agent(self.settings.tools)
-
-        logger.info(
-            "Agent '{}' connected. Tools: {}. Persistence: {}.",
-            self.settings.name,
-            len(self._available_tools),
-            "Enabled" if self.checkpointer else "Disabled",
-        )
-
         await self.set_ready()
-
-    async def _close(self) -> None:
-        """
-        Stops the agent service and associated components.
-        """
-        if self.executor.is_ready():
-            await self.executor.stop()
-
-        logger.info("Agent Service '{}' stopped.", self.settings.name)
 
     async def run(
         self,
         input_message: str,
+        thread_id: Optional[str] = None,
         history: Optional[List[ChatMessage]] = None,
-        **kwargs: Any,
+        **context: Any,
     ) -> str:
         """
-        Executes the agent loop for a given user input.
-
-        Orchestrates the Think-Act-Observe cycle until the agent produces a final
-        response or reaches the iteration limit. Handles state hydration and persistence
-        automatically if configured.
+        Executes the reasoning loop with dynamic runtime context.
 
         Args:
-            input_message: The user's query or instruction.
-            history: Optional existing conversation history. If persistence is active,
-                     stored history takes precedence.
-            **kwargs: Additional context or overrides.
-
-        Returns:
-            The final text response from the agent.
-
-        Raises:
-            ServiceNotReadyError: If the service is not started.
-            TimeoutError: If execution exceeds max_execution_time_seconds.
-            AgentMaxIterationsError: If the loop limit is reached without conclusion.
+            input_message: The user's query.
+            thread_id: Dynamic session identifier for persistence.
+            history: Optional seed history.
+            **context: Dynamic variables (e.g., employee_id) to be injected into tools.
         """
         if not self.is_ready():
-            raise ServiceNotReadyError(self.service_name)
+            await self.start()
+            await self.wait_ready()
+
+        # Resolve identity from context (Infrastructure) or parameters
+        execution_id = get_request_id() or f"exec_{int(time.time())}"
+        active_thread_id = thread_id or self.thread_id
 
         start_time = time.monotonic()
-        run_id = str(uuid.uuid4())
+        self.tracing.on_agent_start(execution_id, self.settings.name)
 
-        self.tracing.on_agent_start(
-            run_id=run_id,
-            agent_name=self.settings.name,
-            metadata={"thread_id": self.thread_id, "model": self.settings.model_name},
-        )
+        # Thread-local history and state
+        local_history = await self._initialize_state(active_thread_id, history)
+        local_history.append(ChatMessage(role=MessageRole.USER, content=input_message))
+
+        iteration_count = 0
 
         try:
-            current_history = await self._initialize_history(history)
-
-            current_history.append(
-                ChatMessage(role=MessageRole.USER, content=input_message)
-            )
-            self._history = current_history
-
-            iteration_count = 0
-
             while iteration_count < self.settings.max_iterations:
                 if (
                     time.monotonic() - start_time
                 ) > self.settings.max_execution_time_seconds:
-                    raise TimeoutError("Agent execution timeout exceeded.")
+                    raise TimeoutError("Agent execution timeout.")
 
                 iteration_count += 1
-                self._current_step += 1
 
-                response = await self._generate_step(self._history)
+                # 1. Reasoning
+                response = await self._generate_step(local_history)
+                clean_content, tool_calls = self.parser.parse(response)
 
-                assistant_msg = self._convert_response_to_message(response)
-                self._history.append(assistant_msg)
+                # 2. Context Injection (Safety middleware for arguments)
+                if tool_calls and context:
+                    self._inject_context_to_tools(tool_calls, context)
 
-                await self._save_checkpoint(self._history, self._current_step)
-
-                if not response.tool_calls:
-                    self.tracing.on_run_end(
-                        run_id, outputs={"response": response.content}
-                    )
-                    return response.content or ""
-
-                logger.debug(
-                    "Agent calling tools: {}",
-                    [tc.name for tc in response.tool_calls],
+                assistant_msg = self._convert_response_to_message(
+                    clean_content, tool_calls
                 )
+                local_history.append(assistant_msg)
 
-                for tool_call in response.tool_calls:
-                    self.tracing.on_tool_start(
-                        run_id=tool_call.id,
-                        tool_name=tool_call.name,
-                        tool_input=str(tool_call.arguments),
-                        parent_run_id=run_id,
+                if not tool_calls:
+                    await self._save_checkpoint(
+                        active_thread_id, local_history, iteration_count, context
                     )
+                    return clean_content or ""
 
-                tool_outputs = await self.executor.execute_batch(response.tool_calls)
-
+                # 3. Acting
+                tool_outputs = await self.executor.execute_batch(tool_calls)
                 for output in tool_outputs:
-                    self.tracing.on_run_end(
-                        run_id=output.tool_call_id, outputs={"result": output.content}
-                    )
+                    local_history.append(self._convert_output_to_message(output))
 
-                    tool_msg = self._convert_output_to_message(output)
-                    self._history.append(tool_msg)
-
-                await self._save_checkpoint(self._history, self._current_step)
+                await self._save_checkpoint(
+                    active_thread_id, local_history, iteration_count, context
+                )
 
             raise AgentMaxIterationsError("Agent failed to reach a conclusion.")
-
         except Exception as e:
-            logger.error("Agent execution failed: {}", e)
-            self.tracing.on_run_error(run_id, e)
+            logger.error("Execution failed for trace {}: {}", execution_id, e)
             raise
+
+    def _inject_context_to_tools(
+        self, tool_calls: List[ToolCall], context: Dict[str, Any]
+    ) -> None:
+        """
+        Maps dynamic context variables to tool arguments if missing.
+        """
+        for tool_call in tool_calls:
+            for key, value in context.items():
+                if key not in tool_call.arguments:
+                    tool_call.arguments[key] = value
+                    logger.debug(
+                        "Injected context '{}' into tool '{}'.", key, tool_call.name
+                    )
 
     async def _generate_step(self, history: List[ChatMessage]) -> LLMResponse:
-        """
-        Invokes the LLM to generate the next step (thought or action).
+        """Invokes LLM provider with local history."""
+        payload = [msg.model_dump(exclude_none=True) for msg in history]
+        return await self.llm.generate(
+            messages=payload, tools=self._available_tools, temperature=0.0
+        )
 
-        Args:
-            history: The full conversation history including system prompt.
-
-        Returns:
-            The LLM response containing content and/or tool calls.
-        """
-        messages_payload = [msg.model_dump(exclude_none=True) for msg in history]
-
-        generate_kwargs = {
-            "messages": messages_payload,
-            "tools": self._available_tools,
-            "temperature": self.settings.temperature,
-        }
-
-        if self.settings.model_name:
-            generate_kwargs["model"] = self.settings.model_name
-
-        try:
-            return await self.llm.generate(**generate_kwargs)
-        except Exception as e:
-            logger.error("LLM Generation failed: {}", e, exc_info=True)
-            raise
-
-    # --- Persistence Helpers ---
-
-    async def _initialize_history(
-        self, argument_history: Optional[List[ChatMessage]]
+    async def _initialize_state(
+        self, thread_id: Optional[str], arg_history: Optional[List[ChatMessage]]
     ) -> List[ChatMessage]:
-        """
-        Prepares the initial conversation history.
+        """Loads conversation history from checkpointer."""
+        history = []
+        if self.checkpointer and thread_id:
+            state = await self.checkpointer.load(thread_id)
+            if state:
+                history = [ChatMessage(**msg) for msg in state.get("history", [])]
 
-        Logic:
-        1. Attempts to load persisted state if checkpointer is configured.
-        2. If no persisted state, uses the history provided in arguments.
-        3. Ensures the System Prompt is always present at the beginning.
-
-        Args:
-            argument_history: History passed via the run() arguments.
-
-        Returns:
-            The consolidated list of ChatMessages.
-        """
-        history: List[ChatMessage] = []
-
-        if self.checkpointer and self.thread_id:
-            try:
-                state = await self.checkpointer.load(self.thread_id)
-                if state and "history" in state:
-                    history = [ChatMessage(**msg) for msg in state["history"]]
-                    self._current_step = state.get("step", 0)
-                    self._variables = state.get("variables", {})
-                    logger.debug(
-                        "Restored {} messages for thread '{}'.",
-                        len(history),
-                        self.thread_id,
-                    )
-            except Exception as e:
-                logger.error(
-                    "Failed to restore agent state for thread '{}': {}. Starting fresh.",
-                    self.thread_id,
-                    e,
-                )
-
-        if not history and argument_history:
-            history = argument_history.copy()
+        if not history and arg_history:
+            history = arg_history.copy()
 
         if not any(msg.role == MessageRole.SYSTEM for msg in history):
             history.insert(
@@ -286,44 +183,35 @@ class AgentService(BaseService):
 
         return history
 
-    async def _save_checkpoint(self, history: List[ChatMessage], step: int) -> None:
-        """
-        Saves the current execution state to the configured checkpointer.
-
-        Args:
-            history: Current conversation history.
-            step: Current iteration step count.
-        """
-        if not self.checkpointer or not self.thread_id:
-            return
-
-        state_payload = {
-            "history": [msg.model_dump() for msg in history],
-            "step": step,
-            "variables": self._variables,
-            "updated_at": str(uuid.uuid4()),
-            "agent_profile": self.settings.name,
-        }
-
-        try:
-            await self.checkpointer.save(self.thread_id, state_payload)
-        except Exception as e:
-            logger.warning(
-                "Failed to save checkpoint for thread '{}': {}", self.thread_id, e
+    async def _save_checkpoint(
+        self,
+        thread_id: Optional[str],
+        history: List[ChatMessage],
+        step: int,
+        context: Dict[str, Any],
+    ) -> None:
+        """Persists session state."""
+        if self.checkpointer and thread_id:
+            await self.checkpointer.save(
+                thread_id,
+                {
+                    "history": [msg.model_dump() for msg in history],
+                    "step": step,
+                    "variables": context,
+                    "agent": self.settings.name,
+                },
             )
 
-    # --- Converters ---
-
-    def _convert_response_to_message(self, response: LLMResponse) -> ChatMessage:
-        """Converts the LLM response object into a standardized ChatMessage."""
+    def _convert_response_to_message(
+        self, content: Optional[str], tool_calls: List[ToolCall]
+    ) -> ChatMessage:
         return ChatMessage(
             role=MessageRole.ASSISTANT,
-            content=response.content,
-            metadata={"tool_calls": response.tool_calls} if response.tool_calls else {},
+            content=content,
+            metadata={"tool_calls": tool_calls} if tool_calls else None,
         )
 
     def _convert_output_to_message(self, output: ToolOutput) -> ChatMessage:
-        """Converts a tool execution output into a standardized ChatMessage."""
         return ChatMessage(
             role=MessageRole.TOOL,
             content=output.content,

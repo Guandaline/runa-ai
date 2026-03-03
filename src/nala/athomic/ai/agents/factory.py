@@ -5,7 +5,7 @@ from nala.athomic.ai.agents.executors.strategies.sync import SyncToolExecutor
 from nala.athomic.ai.agents.persistence.factory import CheckpointFactory
 from nala.athomic.ai.agents.persistence.protocol import CheckpointProtocol
 from nala.athomic.ai.agents.service import AgentService
-from nala.athomic.ai.llm.manager import llm_manager
+from nala.athomic.ai.llm.manager import LLMManager, llm_manager
 from nala.athomic.ai.tools.registry import tool_registry
 from nala.athomic.config import get_settings
 from nala.athomic.config.schemas.ai.agents import AgentProfileSettings, AgentsSettings
@@ -28,6 +28,8 @@ class AgentFactory:
         cls,
         profile_name: Optional[str] = None,
         thread_id: Optional[str] = None,
+        settings: Optional[AgentsSettings] = None,
+        llm_manager_instance: Optional[LLMManager] = llm_manager,
     ) -> AgentService:
         """
         Creates a new AgentService instance based on the specified profile.
@@ -45,20 +47,20 @@ class AgentFactory:
             RuntimeError: If agents are disabled or dependencies (LLM) cannot be resolved.
             ValueError: If the requested profile does not exist.
         """
-        app_settings = get_settings()
-        agents_config: AgentsSettings = app_settings.ai.agents
 
-        if not agents_config or not agents_config.enabled:
+        agents_settings: AgentsSettings = settings or get_settings().ai.agents
+
+        if not agents_settings or not agents_settings.enabled:
             raise RuntimeError("Agents module is disabled in application settings.")
 
-        target_profile_name = profile_name or agents_config.default_profile
+        target_profile_name = profile_name or agents_settings.default_profile
 
         profile: Optional[AgentProfileSettings] = (
-            agents_config.profiles.connections.get(target_profile_name)
+            agents_settings.profiles.connections.get(target_profile_name)
         )
 
         if not profile:
-            available = list(agents_config.profiles.connections.keys())
+            available = list(agents_settings.profiles.connections.keys())
             raise ValueError(
                 f"Agent profile '{target_profile_name}' not found. "
                 f"Available profiles: {available}"
@@ -71,11 +73,10 @@ class AgentFactory:
 
         # 1. Resolve LLM Connection
         connection_name = (
-            profile.connection_name or agents_config.default_connection_name
+            profile.connection_name or agents_settings.default_connection_name
         )
-
         try:
-            base_llm = llm_manager.get_client(name=connection_name)
+            base_llm = llm_manager_instance.get_client(name=connection_name)
             llm_instance = base_llm
 
         except (KeyError, RuntimeError) as e:
@@ -91,7 +92,7 @@ class AgentFactory:
 
         # Access persistence settings dynamically to support partial configurations
         # Assuming app_settings.ai.agents.persistence structure
-        persistence_settings = getattr(agents_config, "persistence", None)
+        persistence_settings = getattr(agents_settings, "persistence", None)
 
         if persistence_settings and persistence_settings.enabled and thread_id:
             try:

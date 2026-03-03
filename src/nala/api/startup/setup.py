@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from nala.api.middleware.request_context_middleware import RequestContextMiddleware
-from nala.api.routes import internal_routes
+from nala.api.routes import internal_routes, public_routes
 from nala.athomic.observability import get_logger
 
 logger = get_logger(__name__)
@@ -26,6 +26,7 @@ def setup_middlewares(app: FastAPI) -> None:
 def setup_base_routes(app: FastAPI) -> None:
     """Includes the application's base routes (DOES NOT include plugin routes)."""
     app.include_router(internal_routes)
+    app.include_router(public_routes)
 
 
 def setup_metrics(app: FastAPI) -> None:

@@ -67,5 +67,3 @@ This chain of factory calls ensures that dependencies are resolved correctly and
 ### Example Factories
 
 ::: nala.athomic.database.factory.ConnectionManagerFactory
-
-::: nala.athomic.serializer.factory.SerializerFactory
